@@ -1,0 +1,94 @@
+#include<ESP8266WiFi.h>
+#include"Adafruit_MQTT_Client.h"
+#define trigPin 12
+#define echoPin 13
+ 
+#define wifi "***"         // Enter hotspot name
+#define password "***"     // Enter password
+#define server "io.adafruit.com"
+#define port 1883
+#define username "****"    // Enter username in Adafruit
+#define key "*******"  // Enter key in adafruit
+WiFiClient esp;
+Adafruit_MQTT_Client mqtt(&esp,server,port,username,key);
+Adafruit_MQTT_Publish feed=Adafruit_MQTT_Publish(&mqtt,username"/feeds/****");
+ 
+ long duration;
+ long distance;
+ float  p;
+void setup()
+{
+    pinMode(trigPin, OUTPUT);  
+    pinMode(echoPin, INPUT);
+     
+  pinMode(16,OUTPUT);
+  pinMode(5,OUTPUT);
+    delay(100);  
+   Serial.begin(115200);
+  delay(10);
+  Serial.println("Adafruit MQTT demo");
+  Serial.print("Connecting to");
+  Serial.println(wifi);
+  WiFi.begin(wifi,password);
+  while(WiFi.status()!=WL_CONNECTED)
+  { delay(500);
+    Serial.print(".");
+  }
+  Serial.println("WiFi connected");
+  Serial.println("IP address:");
+  Serial.println(WiFi.localIP());
+  Serial.print("Connecting to MQTT");
+  while(mqtt.connect())
+  { Serial.print(".");
+  }
+}
+
+void loop()
+{
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(15);
+  digitalWrite(trigPin, LOW);
+ 
+duration = pulseIn(echoPin, HIGH);
+Serial.println(duration);
+distance=(duration *0.017);
+Serial.println(distance);
+Serial.println(distance);
+ p=(16-distance)*7.692;
+
+  if(distance>3&&distance<16)
+  {
+   
+  digitalWrite(16,0);
+  delay(1000);
+  }
+  else
+  {
+  digitalWrite(16,1);
+  delay(1000);
+  }
+
+
+  if(mqtt.connected())
+  {  p=(16-distance)*(7.69);
+Serial.println(p);
+
+ 
+     int data=p;
+     Serial.print("\nSending ultrasonic value");
+     Serial.print(data);
+     Serial.print("...");
+     if(feed.publish(data))
+     {
+       Serial.println("Success");
+     
+     }
+     else
+     {
+       Serial.println("Fail");
+     }
+     delay(2200);
+  }
+     }
