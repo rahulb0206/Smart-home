@@ -1,0 +1,93 @@
+#include<ESP8266WiFi.h>
+#define ldr A0
+#include"Adafruit_MQTT_Client.h"
+#define wifi "**"       //Enter the hotspot name
+#define password "***"    //Enter the password
+#define server "io.adafruit.com"
+#define port 1883
+#define username "***"      // Enter the username in Adafruit
+#define key "*******"     // Enter the key in Adafruit
+WiFiClient esp;
+Adafruit_MQTT_Client mqtt(&esp,server,port,username,key);
+Adafruit_MQTT_Subscribe feed=Adafruit_MQTT_Subscribe(&mqtt,username"/feeds/****");    // Enter the destination where you upload code
+
+void setup()
+{   pinMode(16,OUTPUT);
+    pinMode(ldr,INPUT);
+    digitalWrite(16,HIGH);
+   
+
+  Serial.begin(115200);
+  delay(10);
+  Serial.println("Adafruit MQTT demo");
+  Serial.print("Connecting to");
+  Serial.println(wifi);
+  WiFi.begin(wifi,password);
+  
+  while(WiFi.status()!=WL_CONNECTED)
+  { delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.println("WiFi connected");
+  Serial.println("IP address:");
+  Serial.println(WiFi.localIP());
+  mqtt.subscribe(&feed);
+  Serial.print("Connecting to MQTT");
+  while(mqtt.connect())
+  { delay(500);
+    Serial.print(".");
+  }
+  
+}
+
+void loop()
+{ 
+   int ldrStatus ;
+   ldrStatus= analogRead(ldr); 
+   Serial.println(ldrStatus);
+  Adafruit_MQTT_Subscribe *subs;
+  Serial.println("inside loop");
+  while(subs==mqtt.readSubscription(5000))
+  {
+    Serial.println("while loop");
+    Serial.print("Got:");
+    Serial.print((char *)feed.lastread);
+    int a=atoi((char *)feed.lastread);
+    Serial.print(" ");
+    Serial.println(a);
+    if(a==0)
+    { digitalWrite(16,HIGH);
+       ldrStatus= analogRead(ldr); 
+       Serial.println(ldrStatus);
+    
+     delay(20);
+     
+    }
+else if(a==1)
+    {    digitalWrite(16,LOW);
+         ldrStatus= analogRead(ldr); 
+         Serial.println(ldrStatus);
+         delay(20);
+               
+     }
+else  if(a==3)
+{
+   
+
+     if(ldrStatus <=780)
+     {
+           digitalWrite(16, HIGH );//turn LED on
+            ldrStatus= analogRead(ldr); 
+         Serial.println(ldrStatus);
+           
+   }
+  else {
+
+    digitalWrite(16, LOW);          //turn LED off
+     ldrStatus= analogRead(ldr); 
+         Serial.println(ldrStatus);
+  }
+}
+  }
+}
